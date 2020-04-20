@@ -1,0 +1,517 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "0.1.0.0",
+    "parameters": {
+        "vNetName": {
+            "type": "string",
+            "defaultValue": "dev-hubnetwork-vnet",
+            "metadata": {
+                "displayName": "Name of VNet"
+            }
+        },
+        "addressSpace": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/22"
+        },
+        "defaultSubnetNames": {
+            "type": "array",
+            "defaultValue": [
+                "GatewaySubnet",
+                "AzureBastionSubnet",
+                "AzureFirewallSubnet",
+                "APIManagement"
+            ]
+        },
+        "gatewaySubnetAddressPrefix": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "IP range of gateway subnet, leave this out to skip GatewaySubnet"
+            }
+        },
+        "azureBastionSubnetAddressPrefix": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "IP range of bastion subnet, leave this out to skip bastion subnet"
+            }
+        },
+        "firewallSubnetAddressPrefix": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "IP range of firewall subnet, leave this out to skip Firewall subnet"
+            }
+        },
+        "aPIManagementSubnetAddressPrefix": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "IP range of APIManagement subnet, leave this out to skip APIManagement subnet"
+            }
+        },
+        "customSubnetNames": {
+            "type": "array",
+            "defaultValue": [
+                "SharedServices"
+            ],
+            "metadata": {
+                "displayName": "Names of subnets, count has to match count of subnetRanges parameters"
+            }
+        },
+        "customSubnetRanges": {
+            "type": "array",
+            "defaultValue": [
+                "10.0.1.0/24"
+            ],
+            "metadata": {
+                "displayName": "A subnet will be created for each range"
+            }
+        },
+        "tags": {
+            "type": "object",
+            "defaultValue": {
+            },
+            "metadata": {
+                "displayName": "Object or json string with tags to be applied to all resources created."
+            }
+        }
+    },
+    "variables": {
+        "copy": [
+            {
+                "name": "customSubnets",
+                "count": "[length(parameters('customSubnetRanges'))]",
+                "input": {
+                    "name": "[if(greaterOrEquals(length(parameters('customSubnetNames')),copyIndex('customSubnets',1)),parameters('customSubnetNames')[copyIndex('customSubnets')],concat('subnet',copyIndex('customSubnets',1)))]",
+                    "properties": {
+                        "addressPrefix": "[parameters('customSubnetRanges')[copyIndex('customSubnets')]]",
+                        "networkSecurityGroup": {
+                            "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('VNetName'),'-',if(greaterOrEquals(length(parameters('customSubnetNames')),copyIndex('customSubnets',1)),parameters('customSubnetNames')[copyIndex('customSubnets')],concat('subnet',copyIndex('customSubnets',1))),'-nsg'))]"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "resources": [
+        {
+            "comments": "Central hub network",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2019-09-01",
+            "name": "[parameters('VNetName')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "defaultnsg",
+                "[concat(parameters('VNetName'),'-AzureBastionSubnet-nsg')]",
+                "[concat(parameters('VNetName'),'-APIManagement-nsg')]"
+            ],
+            "tags": "[parameters('tags')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('addressSpace')]"
+                    ]
+                },
+                "subnets": "[variables('customSubnets')]"
+            }
+        },
+        {
+            "comments": "Gateway subnet",
+            "condition": "[not(empty(parameters('GatewaySubnetAddressPrefix')))]",
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2019-11-01",
+            "name": "[concat(parameters('VNetName'),'/GatewaySubnet')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[parameters('VNetName')]"
+            ],
+            "properties": {
+                "addressPrefix": "[parameters('GatewaySubnetAddressPrefix')]"
+            }
+        },
+        {
+            "comments": "Azure Bastion subnet",
+            "condition": "[not(empty(parameters('AzureBastionSubnetAddressPrefix')))]",
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2019-11-01",
+            "name": "[concat(parameters('VNetName'),'/AzureBastionSubnet')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[parameters('VNetName')]",
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('VNetName'), '/subnets', '/GatewaySubnet')]"
+            ],
+            "properties": {
+                "addressPrefix": "[parameters('AzureBastionSubnetAddressPrefix')]",
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('VNetName'),'-AzureBastionSubnet','-nsg'))]"
+                }
+            }
+        },
+        {
+            "comments": "Azure Firewall subnet",
+            "condition": "[not(empty(parameters('FirewallSubnetAddressPrefix')))]",
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2019-11-01",
+            "name": "[concat(parameters('VNetName'),'/AzureFirewallSubnet')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[parameters('VNetName')]",
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('VNetName'), '/subnets', '/GatewaySubnet')]",
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('VNetName'), '/subnets', '/AzureBastionSubnet')]"
+            ],
+            "properties": {
+                "addressPrefix": "[parameters('FirewallSubnetAddressPrefix')]"
+            }
+        },
+        {
+            "comments": "Azure API Management subnet",
+            "condition": "[not(empty(parameters('APIManagementSubnetAddressPrefix')))]",
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2019-11-01",
+            "name": "[concat(parameters('VNetName'),'/APIManagement')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[parameters('VNetName')]",
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('VNetName'), '/subnets', '/GatewaySubnet')]",
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('VNetName'), '/subnets', '/AzureBastionSubnet')]",
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('VNetName'), '/subnets', '/AzureFirewallSubnet')]"
+            ],
+            "properties": {
+                "addressPrefix": "[parameters('APIManagementSubnetAddressPrefix')]",
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('VNetName'),'-APIManagement','-nsg'))]"
+                }
+            }
+        },
+        {
+            "comments": "Default nsg for every custom subnet",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2018-08-01",
+            "name": "[concat(parameters('VNetName'),'-',variables('customSubnets')[copyIndex('defaultnsg')].name,'-nsg')]",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "defaultnsg",
+                "count": "[length(parameters('customSubnetRanges'))]"
+            },
+            "tags": "[parameters('tags')]",
+            "properties": {
+                "securityRules": [
+
+                ]
+            }
+        },
+        {
+            "comments": "Nsg for AzureBastionSubnet.",
+            "condition": "[contains(parameters('defaultSubnetNames'),'AzureBastionSubnet')]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2018-08-01",
+            "name": "[concat(parameters('VNetName'),'-AzureBastionSubnet-nsg')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "bastion-in-allow",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationPortRange": "443",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "bastion-control-in-allow",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "GatewayManager",
+                            "destinationPortRanges": [
+                                "443",
+                                "4443"
+                            ],
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 120,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "bastion-in-deny",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 900,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "bastion-vnet-out-allow",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationPortRanges": [
+                                "22",
+                                "3389"
+                            ],
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "bastion-azure-out-allow",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationPortRange": "443",
+                            "destinationAddressPrefix": "AzureCloud",
+                            "access": "Allow",
+                            "priority": 120,
+                            "direction": "Outbound"
+                        }
+                    }
+                ]
+            },
+            "tags": "[parameters('tags')]"
+
+        },
+        {
+            "comments": "Nsg for APIManagement subnet.",
+            "condition": "[contains(parameters('defaultSubnetNames'),'APIManagement')]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2018-08-01",
+            "name": "[concat(parameters('VNetName'),'-APIManagement-nsg')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "apim-in-deny",
+                        "properties": {
+                            "description": "Deny all inbound traffic to APIM Subnet",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 900,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "apim-in-management",
+                        "properties": {
+                            "description": "Management endpoint for Azure portal and PowerShell",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3443",
+                            "sourceAddressPrefix": "ApiManagement",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "apim-in-rediscache",
+                        "properties": {
+                            "description": "Access Azure Cache for Redis Instances between RoleInstances",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "6381-6383",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 120,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "apim-in-azureloadbalancer",
+                        "properties": {
+                            "description": "Azure Infrastructure Load Balancer",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "8080",
+                            "sourceAddressPrefix": "AzureLoadBalancer",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 140,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "apim-out-deny",
+                        "properties": {
+                            "description": "Deny all outbound traffic from APIM subnet",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 900,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "apim-out-azurestorage",
+                        "properties": {
+                            "description": "Dependency on Azure Storage",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "Storage",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Outbound",
+                            "destinationPortRanges": [
+                                "80",
+                                "443"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "apim-out-aad",
+                        "properties": {
+                            "description": "Azure Active Directory",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "AzureActiveDirectory",
+                            "access": "Allow",
+                            "priority": 120,
+                            "direction": "Outbound",
+                            "destinationPortRanges": [
+                                "80",
+                                "443"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "apim-out-azuresql",
+                        "properties": {
+                            "description": "Access to Azure SQL endpoints",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "1433",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "Sql",
+                            "access": "Allow",
+                            "priority": 140,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "apim-out-eventhub",
+                        "properties": {
+                            "description": "Dependency for Log to Event Hub policy and monitoring agent",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "EventHub",
+                            "access": "Allow",
+                            "priority": 160,
+                            "direction": "Outbound",
+                            "destinationPortRanges": [
+                                "5671",
+                                "5672",
+                                "443"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "apim-out-azurefileshare",
+                        "properties": {
+                            "description": "Dependency on Azure File Share for GIT",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "445",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "Storage",
+                            "access": "Allow",
+                            "priority": 180,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "apim-out-healthstatus",
+                        "properties": {
+                            "description": "Needed to publish Health status to Resource Health",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "1886",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "Internet",
+                            "access": "Allow",
+                            "priority": 200,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "apim-out-azuremonitor",
+                        "properties": {
+                            "description": "Publish Diagnostics Logs and Metrics",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "AzureMonitor",
+                            "access": "Allow",
+                            "priority": 220,
+                            "direction": "Outbound"                            
+                        }
+                    },
+                    {
+                        "name": "apim-out-smtp",
+                        "properties": {
+                            "description": "Connect to SMTP Relay for sending e-mails",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "Internet",
+                            "access": "Allow",
+                            "priority": 240,
+                            "direction": "Outbound",
+                            "destinationPortRanges": [
+                                "25",
+                                "587",
+                                "25028"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "apim-out-redis",
+                        "properties": {
+                            "description": "Access Azure Cache for Redis Instances between RoleInstances",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "6381-6383",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 260,
+                            "direction": "Outbound"
+                        }
+                    }
+
+                ]
+            },
+            "tags": "[parameters('tags')]"
+        }
+    ],
+    "outputs": {
+
+    }
+}
