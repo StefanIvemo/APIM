@@ -1,0 +1,61 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"name": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string"
+        },
+        "publisherEmail": {
+			"type": "string"			
+		},
+		"publisherName": {
+			"type": "string"
+		},
+		"sku": {
+			"type": "string"			
+		},
+		"skuCount": {
+			"type": "int"			
+		},
+		"proxyHostname": {
+			"type": "string"			
+		},
+		"ProxyCertificateID": {
+			"type": "string",
+			"metadata": {
+				"description": "Reference to the KeyVault Certificate."
+			}
+		}
+	},
+	"variables": {
+		
+	},
+	"resources": [{
+		"apiVersion": "2017-03-01",
+		"name": "[parameters('name')]",
+		"type": "Microsoft.ApiManagement/service",
+		"location": "[parameters('location')]",
+		"tags": {
+			
+		},
+		"sku": {
+			"name": "[parameters('sku')]",
+			"capacity": "[parameters('skuCount')]"
+		},
+		"properties": {
+			"publisherEmail": "[parameters('publisherEmail')]",
+			"publisherName": "[parameters('publisherName')]",
+			"hostnameConfigurations": [{
+				"type": "Proxy",
+				"hostName": "[parameters('proxyhostname')]",
+				"keyVaultId": "[parameters('ProxyCertificateID')]"
+			}]
+		},
+		"identity": {
+			"type": "systemAssigned"
+		}
+	}]
+}
