@@ -3,16 +3,16 @@
 	"contentVersion": "1.0.0.0",
 	"parameters": {
 		"name": {
-            "type": "string"
-        },
-        "location": {
-            "type": "string"
-        },
-        "publisherEmail": {
+			"type": "string"
+		},
+		"location": {
+			"type": "string"
+		},
+		"publisherEmail": {
 			"type": "string"
 		},
 		"publisherName": {
-			"type": "string"			
+			"type": "string"
 		},
 		"sku": {
 			"type": "string"
@@ -21,7 +21,7 @@
 			"type": "int"
 		},
 		"keyVaultName": {
-			"type": "string"			
+			"type": "string"
 		},
 		"ProxyHostName": {
 			"type": "string"
@@ -30,68 +30,90 @@
 			"type": "string"
 		}
 	},
-	"variables": {		
+	"variables": {
 		"apimidentityID": "[concat(resourceId('Microsoft.ApiManagement/service', parameters('name')),'/providers/Microsoft.ManagedIdentity/Identities/default')]"
 	},
-	"resources": [{
-		"apiVersion": "2019-12-01",
-		"name": "[parameters('name')]",
-		"type": "Microsoft.ApiManagement/service",
-		"location": "[parameters('location')]",
-		"tags": {
-		},
-		"sku": {
-			"name": "[parameters('sku')]",
-			"capacity": "[parameters('skuCount')]"
-		},
-		"properties": {
-			"publisherEmail": "[parameters('publisherEmail')]",
-			"publisherName": "[parameters('publisherName')]"
-		},
-		"identity": {
-			"type": "SystemAssigned"
-		}
-	},
-	{
-		"type": "Microsoft.KeyVault/vaults/accessPolicies",
-		"name": "[concat(parameters('keyVaultName'), '/add')]",
-		"apiVersion": "2019-09-01",
-		"dependsOn": [
-			"[resourceId('Microsoft.ApiManagement/service', parameters('name'))]"
-		],
-		"properties": {
-			"accessPolicies": [{
-				"tenantId": "[reference(variables('apimidentityID'), '2018-11-30').tenantId]",
-				"objectId": "[reference(variables('apimidentityID'), '2018-11-30').principalId]",
-				"permissions": {
-					"secrets": ["get"]
-				}
-			}]
-		}
-	},
-	{
-		"apiVersion": "2020-01-01",
-		"name": "apimWithKeyVault",
-		"type": "Microsoft.Resources/deployments",
-		"dependsOn": [
-		    "[resourceId('Microsoft.ApiManagement/service', parameters('name'))]"
-		],
-		"properties": {
-			"mode": "incremental",
-			"templateLink": {
-				"uri": "https://raw.githubusercontent.com/StefanIvemo/APIM/master/APIM/APIMServiceHostName.json",
-				"contentVersion": "1.0.0.0"
+	"resources": [
+		{
+			"apiVersion": "2019-12-01",
+			"name": "[parameters('name')]",
+			"type": "Microsoft.ApiManagement/service",
+			"location": "[parameters('location')]",
+			"tags": {
 			},
-			"parameters": {
-				"name": { "value": "[parameters('name')]"},
-                "location": { "value": "[parameters('location')]"},
-                "publisherEmail": { "value": "[parameters('publisherEmail')]"},
-				"publisherName": { "value": "[parameters('publisherName')]"},
-				"sku": { "value": "[parameters('sku')]"},
-				"skuCount": { "value": "[parameters('skuCount')]"},
-				"proxyHostName": {"value" : "[parameters('proxyHostName')]"},
-				"ProxyCertificateID": {"value" : "[parameters('ProxyCertificateID')]"}
+			"sku": {
+				"name": "[parameters('sku')]",
+				"capacity": "[parameters('skuCount')]"
+			},
+			"properties": {
+				"publisherEmail": "[parameters('publisherEmail')]",
+				"publisherName": "[parameters('publisherName')]"
+			},
+			"identity": {
+				"type": "SystemAssigned"
+			}
+		},
+		{
+			"type": "Microsoft.KeyVault/vaults/accessPolicies",
+			"name": "[concat(parameters('keyVaultName'), '/add')]",
+			"apiVersion": "2019-09-01",
+			"dependsOn": [
+				"[resourceId('Microsoft.ApiManagement/service', parameters('name'))]"
+			],
+			"properties": {
+				"accessPolicies": [
+					{
+						"tenantId": "[reference(variables('apimidentityID'), '2018-11-30').tenantId]",
+						"objectId": "[reference(variables('apimidentityID'), '2018-11-30').principalId]",
+						"permissions": {
+							"secrets": [
+								"get"
+							]
+						}
+					}
+				]
+			}
+		},
+		{
+			"apiVersion": "2020-01-01",
+			"name": "apimWithKeyVault",
+			"type": "Microsoft.Resources/deployments",
+			"dependsOn": [
+				"[resourceId('Microsoft.ApiManagement/service', parameters('name'))]"
+			],
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "https://raw.githubusercontent.com/StefanIvemo/APIM/master/APIM/APIMServiceHostName.json",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"name": {
+						"value": "[parameters('name')]"
+					},
+					"location": {
+						"value": "[parameters('location')]"
+					},
+					"publisherEmail": {
+						"value": "[parameters('publisherEmail')]"
+					},
+					"publisherName": {
+						"value": "[parameters('publisherName')]"
+					},
+					"sku": {
+						"value": "[parameters('sku')]"
+					},
+					"skuCount": {
+						"value": "[parameters('skuCount')]"
+					},
+					"proxyHostName": {
+						"value": "[parameters('proxyHostName')]"
+					},
+					"ProxyCertificateID": {
+						"value": "[parameters('ProxyCertificateID')]"
+					}
+				}
 			}
 		}
-	}]
+	]
 }
