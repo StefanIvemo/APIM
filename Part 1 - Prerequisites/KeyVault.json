@@ -2,25 +2,28 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "name": {
+        "kvname": {
             "type": "string"
         },
         "location": {
             "type": "string"
         },
-         "ObjectID": {
-            "type": "string"        
-        },  
         "tenantID": {
-            "type": "string"        
-        }   
-      
+            "type": "string"
+        },
+        "adminID": {
+            "type": "string",
+            "metadata": {
+                "description": "ObjectID of Key Vault Admin account"
+            }
+        }
     },
-    "variables": {},
+    "variables": {
+    },
     "resources": [
         {
             "apiVersion": "2018-02-14",
-            "name": "[parameters('name')]",
+            "name": "[parameters('kvname')]",
             "location": "[parameters('location')]",
             "type": "Microsoft.KeyVault/vaults",
             "properties": {
@@ -29,6 +32,50 @@
                 "enabledForDiskEncryption": false,
                 "enableRbacAuthorization": false,
                 "accessPolicies": [
+                    {
+                        "objectId": "[parameters('adminID')]",
+                        "tenantId": "[parameters('tenantID')]",
+                        "permissions": {
+                            "keys": [
+                                "Get",
+                                "List",
+                                "Update",
+                                "Create",
+                                "Import",
+                                "Delete",
+                                "Recover",
+                                "Backup",
+                                "Restore"
+                            ],
+                            "secrets": [
+                                "Get",
+                                "List",
+                                "Set",
+                                "Delete",
+                                "Recover",
+                                "Backup",
+                                "Restore"
+                            ],
+                            "certificates": [
+                                "Get",
+                                "List",
+                                "Update",
+                                "Create",
+                                "Import",
+                                "Delete",
+                                "Recover",
+                                "Backup",
+                                "Restore",
+                                "ManageContacts",
+                                "ManageIssuers",
+                                "GetIssuers",
+                                "ListIssuers",
+                                "SetIssuers",
+                                "DeleteIssuers"
+                            ]
+                        },
+                        "applicationId": null
+                    }
                 ],
                 "tenantId": "[parameters('tenantID')]",
                 "sku": {
@@ -37,16 +84,21 @@
                 },
                 "enableSoftDelete": true,
                 "softDeleteRetentionInDays": 30,
-                "networkAcls": {                  
+                "networkAcls": {
                     "defaultAction": "allow",
                     "bypass": "AzureServices",
-                    "ipRules": [],
-                    "virtualNetworkRules": []     
+                    "ipRules": [
+                    ],
+                    "virtualNetworkRules": [
+                    ]
                 }
             },
-            "tags": {},
-            "dependsOn": []
+            "tags": {
+            },
+            "dependsOn": [
+            ]
         }
     ],
-    "outputs": {}
+    "outputs": {
+    }
 }
