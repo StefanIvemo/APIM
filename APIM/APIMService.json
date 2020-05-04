@@ -28,6 +28,30 @@
 		},
 		"ProxyCertificateID": {
 			"type": "string"
+		},
+		"devportalHostname": {
+			"type": "string"
+		},
+		"devportalCertificateID": {
+			"type": "string"			
+		},
+		"portalHostname": {
+			"type": "string"
+		},
+		"portalCertificateID": {
+			"type": "string"			
+		},
+		"mgmtHostname": {
+			"type": "string"
+		},
+		"mgmtCertificateID": {
+			"type": "string"			
+		},
+		"scmHostname": {
+			"type": "string"
+		},
+		"scmCertificateID": {
+			"type": "string"			
 		}
 	},
 	"variables": {
@@ -111,7 +135,31 @@
 					},
 					"ProxyCertificateID": {
 						"value": "[parameters('ProxyCertificateID')]"
-					}
+					},
+					"devportalHostName": {
+						"value": "[parameters('devportalHostName')]"
+					},
+					"devportalCertificateID": {
+						"value": "[parameters('devportalCertificateID')]"
+					},
+					"portalHostName": {
+						"value": "[parameters('portalHostName')]"
+					},
+					"portalCertificateID": {
+						"value": "[parameters('portalCertificateID')]"
+					},
+					"mgmtHostName": {
+						"value": "[parameters('mgmtHostName')]"
+					},
+					"mgmtCertificateID": {
+						"value": "[parameters('mgmtCertificateID')]"
+					},
+					"scmHostName": {
+						"value": "[parameters('scmHostName')]"
+					},
+					"scmCertificateID": {
+						"value": "[parameters('scmCertificateID')]"
+					}					
 				}
 			}
 		}

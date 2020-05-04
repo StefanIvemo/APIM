@@ -25,6 +25,30 @@
 		},
 		"ProxyCertificateID": {
 			"type": "string"			
+		},
+		"devportalHostname": {
+			"type": "string"
+		},
+		"devportalCertificateID": {
+			"type": "string"			
+		},
+		"portalHostname": {
+			"type": "string"
+		},
+		"portalCertificateID": {
+			"type": "string"			
+		},
+		"mgmtHostname": {
+			"type": "string"
+		},
+		"mgmtCertificateID": {
+			"type": "string"			
+		},
+		"scmHostname": {
+			"type": "string"
+		},
+		"scmCertificateID": {
+			"type": "string"			
 		}
 	},
 	"variables": {
@@ -51,6 +75,26 @@
 						"type": "Proxy",
 						"hostName": "[parameters('proxyhostname')]",
 						"keyVaultId": "[parameters('ProxyCertificateID')]"
+					},
+					{
+						"type": "DeveloperPortal",
+						"hostName": "[parameters('devportalhostname')]",
+						"keyVaultId": "[parameters('devportalCertificateID')]"
+					},
+					{
+						"type": "Portal",
+						"hostName": "[parameters('portalhostname')]",
+						"keyVaultId": "[parameters('portalCertificateID')]"
+					},
+					{
+						"type": "Management",
+						"hostName": "[parameters('mgmthostname')]",
+						"keyVaultId": "[parameters('mgmtCertificateID')]"
+					},
+						{
+						"type": "Scm",
+						"hostName": "[parameters('scmhostname')]",
+						"keyVaultId": "[parameters('scmCertificateID')]"
 					}
 				]
 			},
