@@ -1,0 +1,25 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "name": {
+          "type": "string"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.ApiManagement/service/users",
+            "name": "[concat(parameters('name'), '/log-lady-doublerdiner-dev')]",
+            "apiVersion": "2018-01-01",
+            "scale": null,
+            "properties": {
+                "firstName": "Log",
+                "lastName": "Lady",
+                "email": "log.lady@doublerdiner.dev",
+                "state": "active",
+                "note": "Internal consumer of our APIs",
+                "confirmation": "invite"
+            }
+        }
+    ]
+  }
