@@ -9,10 +9,13 @@
     "resources": [
         {
             "type": "Microsoft.ApiManagement/service/groups/users",
-            "name": "[concat(parameters('name'), '/twinpeakssd/harry-truman-doublerdiner-dev')]",
+            "name": "[concat(parameters('name'), '/tiwnpeakssd/harry-truman-doublerdiner-dev')]",
             "apiVersion": "2018-01-01",
             "scale": null,
-            "properties": {}
+            "properties": {
+
+
+            }
         }
     ]
 }
