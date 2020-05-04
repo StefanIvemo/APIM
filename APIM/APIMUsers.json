@@ -20,6 +20,20 @@
                 "note": "Internal consumer of our APIs",
                 "confirmation": "invite"
             }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/users",
+            "name": "[concat(parameters('name'), '/andy-brennan-doublerdiner-dev')]",
+            "apiVersion": "2018-01-01",
+            "scale": null,
+            "properties": {
+                "firstName": "Andy",
+                "lastName": "Brennan",
+                "email": "andy.brennan@doublerdiner.dev",
+                "state": "active",
+                "note": "Deputy",
+                "confirmation": "invite"
+            }
         }
     ]
   }

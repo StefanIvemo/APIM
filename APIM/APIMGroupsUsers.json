@@ -16,6 +16,16 @@
 
 
             }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/groups/users",
+            "name": "[concat(parameters('name'), '/tiwnpeakssd/andy-brennan-doublerdiner-dev')]",
+            "apiVersion": "2018-01-01",
+            "scale": null,
+            "properties": {
+
+
+            }
         }
     ]
 }
