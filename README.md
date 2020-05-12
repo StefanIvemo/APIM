@@ -13,4 +13,3 @@ Part 3 - Configure APIM in Internal VNet mode (coming)
 # Repo structure
 Each part in the blog series have their own folder with templates and scripts used for that part, e.g. "Part 1 - Prerequisites".
 
-There's also a folder named DevOps where I'll keep the entire solution as it's being built and configured for CI/CD.
