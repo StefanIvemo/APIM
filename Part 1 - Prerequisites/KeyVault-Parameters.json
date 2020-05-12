@@ -2,11 +2,29 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "name": {
-            "value": "kv-drdapim-prod"
+        "kvname": {
+            "value": "kv-apim-prod",
+            "metadata": {
+                "description": "Azure Key Vault name"
+            }
         },
         "location": {
-            "value": "westeurope"
-        }   
+            "value": "westeurope",
+            "metadata": {
+                "description": "Azure Region"
+            }
+        },
+        "tenantID": {
+            "value": "",
+            "metadata": {
+                "description": "The Azure Active Directory tenant ID that should be used for authenticating requests to the key vault"
+            }
+        },
+        "adminID": {
+            "value": "",
+            "metadata": {
+                "description": "The object ID of a user, service principal or security group in the AAD tenant"
+            }
+        }
     }
 }

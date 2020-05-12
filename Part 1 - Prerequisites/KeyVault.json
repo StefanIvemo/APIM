@@ -3,18 +3,27 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "kvname": {
-            "type": "string"
+            "type": "string",
+            "metadata": {
+                "description": "Azure Key Vault name"
+            }
         },
         "location": {
-            "type": "string"
+            "type": "string",
+            "metadata": {
+                "description": "Azure Region"
+            }
         },
         "tenantID": {
-            "type": "string"
+            "type": "string",
+            "metadata": {
+                "description": "The Azure Active Directory tenant ID that should be used for authenticating requests to the key vault"
+            }
         },
         "adminID": {
             "type": "string",
             "metadata": {
-                "description": "ObjectID of Key Vault Admin account"
+                "description": "The object ID of a user, service principal or security group in the AAD tenant"
             }
         }
     },
